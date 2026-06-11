@@ -52,6 +52,8 @@ if (!simulate_own_data) {
 
 Y_obs_mean <- mean(longitudinal_data$Y_obs)
 longitudinal_data$Y_obs_centred <- longitudinal_data$Y_obs - Y_obs_mean
+Y_ref_raw <- 73
+Y_ref_centred <- Y_ref_raw - Y_obs_mean
 
 # Load Stan model
 saftjm_model <- cmdstan_model("saft_jm.stan")
@@ -87,6 +89,7 @@ stan_data <- list(
   alpha_sd = (log(2) / 1.96) * (s_long / s_surv), # standard deviation of the prior for the association parameter alpha, scaled by the ratio of the standard deviations of the longitudinal and survival outcomes
   N_long = nrow(longitudinal_data), # number of longitudinal observations
   Y_long = longitudinal_data$Y_obs_centred, # longitudinal outcome (centred)
+  Y_ref_centred = Y_ref_centred, # centred longitudinal reference value for the survival link
   X_long = X_long, # longitudinal covariate matrix
   N_1_long = length(id_levels), # number of unique participants in the longitudinal data (used for indexing random effects)
   J_1_long = J_1_long, # indexing variable for matching longitudinal observations to participants (used for indexing random effects)
