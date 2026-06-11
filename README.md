@@ -54,8 +54,8 @@ These can be reproduced by setting `simulate_own_data` to `TRUE` within `saft_jm
 
 ```r
 global_seed = 1
-beta_2 = 0
-log_AF = 0
+beta_2 = 0.04
+log_AF = -0.90
 aft_mode = "loglogistic"
 lambda_c = 0
 ```
