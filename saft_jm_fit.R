@@ -22,7 +22,7 @@ simulate_own_data <- FALSE # FALSE = use the pre-complied CSV files, TRUE = simu
 
 #### Scenarios used within manuscript
 
-## By default, the simulate_joint_dataset function simulates treatment 'scenario 1' (beta_2 = 0, gamma (log_AF)=0) under the loglogistic setting (aft_mode="loglogistic") and administrative censoring only (lambda_c=0)
+## By default, the simulate_joint_dataset function simulates treatment 'scenario 4' (beta_2 = 0.04, gamma (log_AF)= -0.9) under the loglogistic setting (aft_mode="loglogistic") and administrative censoring only (lambda_c=0)
 ## To simulate over different scenarios, true data generation distributions and censoring proportions as described within the main manuscript, input the following parameters into 'simulate_joint_dataset'
 
 # Treatment effect scenarios: Scenario 1 (beta_2=0, log_AF=0), Scenario 2 (beta_2=0.04, log_AF=0.9), Scenario 3 (beta_2=-0.04, log_AF=0.9), Scenario 4 (beta_2=0.04, log_AF=-0.9), Scenario 5 (beta_2=-0.04, log_AF=-0.9), 
@@ -45,7 +45,7 @@ if (!simulate_own_data) {
   survival_data <- read.csv("simulated_survival_data.csv")
 } else {
   # Simulate data given a specific seed (global_seed)
-  sim_data <- simulate_joint_dataset(seed = global_seed, beta_2 = 0.00, log_AF = 0.00, aft_mode = "loglogistic", lambda_c = 0) # Default settings use 'scenario 1' for the loglogistic setting with administrative censoring only 
+  sim_data <- simulate_joint_dataset(seed = global_seed, beta_2 = 0.04, log_AF = -0.90, aft_mode = "loglogistic", lambda_c = 0) # Default settings use 'scenario 1' for the loglogistic setting with administrative censoring only 
   longitudinal_data <- sim_data$longitudinal
   survival_data <- sim_data$survival
 }
@@ -115,6 +115,7 @@ sAFT_JM_fit <- saftjm_model$sample(
 )
 
 
+
 ### Formatting of results
 
 # Extract linear mixed model estimate and standard error
@@ -124,10 +125,10 @@ lmm_se <- sqrt(diag(vcov(lmm_fit)))
 # Extract sAFT-JM model estimate and standard error 
 sAFT_JM_vars <- c("beta_long[1]", "beta_long[2]", "beta_long[3]", "gamma[1]", "alpha") # Parameters of interest
 sAFT_JM_draws <- posterior::as_draws_df(sAFT_JM_fit$draws(variables = sAFT_JM_vars)) # Extract posterior draws 
-sAFT_JM_est <- sapply(sAFT_JM_vars, function(x) mean(sAFT_JM_vars[[x]])) 
-sAFT_JM_se <- sapply(sAFT_JM_vars, function(x) sd(sAFT_JM_vars[[x]])) 
-sAFT_JM_l95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.025)) 
-sAFT_JM_u95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.975)) 
+sAFT_JM_est <- sapply(sAFT_JM_vars, function(x) mean(sAFT_JM_draws[[x]])) 
+sAFT_JM_se <- sapply(sAFT_JM_vars, function(x) sd(sAFT_JM_draws[[x]])) 
+sAFT_JM_l95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_draws[[x]], 0.025)) 
+sAFT_JM_u95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_draws[[x]], 0.975)) 
 
 # Construct dataframe of results
 result_comparison <- data.frame(Parameter = c("beta_long_intercept", "beta_long_time", "beta_long_time_arm", "gamma", "alpha"), 
@@ -136,7 +137,7 @@ result_comparison <- data.frame(Parameter = c("beta_long_intercept", "beta_long_
                                 LMM_L95 = c(lmm_est["(Intercept)"] - 1.96*lmm_se["(Intercept)"] + Y_obs_mean, lmm_est["time"] - 1.96*lmm_se["time"], lmm_est["time:arm"] - 1.96*lmm_se["time:arm"], NA, NA), 
                                 LMM_U95 = c(lmm_est["(Intercept)"] + 1.96*lmm_se["(Intercept)"] + Y_obs_mean, lmm_est["time"] + 1.96*lmm_se["time"], lmm_est["time:arm"] + 1.96*lmm_se["time:arm"], NA, NA), 
                                 sAFT_JM = c(sAFT_JM_est["beta_long[1]"] + Y_obs_mean, sAFT_JM_est["beta_long[2]"], sAFT_JM_est["beta_long[3]"], sAFT_JM_est["gamma[1]"], sAFT_JM_est["alpha"]), 
-                                sAFT_JM_SE = c(sAFT_JM_se["beta_long[1]"], sAFT_JM_se["beta_long[2]"], sAFT_JM_se["beta_long[3]"], sAFT_se["gamma[1]"], sAFT_JM_se["alpha"]), 
+                                sAFT_JM_SE = c(sAFT_JM_se["beta_long[1]"], sAFT_JM_se["beta_long[2]"], sAFT_JM_se["beta_long[3]"], sAFT_JM_se["gamma[1]"], sAFT_JM_se["alpha"]), 
                                 sAFT_JM_L95 = c(sAFT_JM_l95["beta_long[1].2.5%"] + Y_obs_mean, sAFT_JM_l95["beta_long[2].2.5%"], sAFT_JM_l95["beta_long[3].2.5%"], sAFT_JM_l95["gamma[1].2.5%"], sAFT_JM_l95["alpha.2.5%"]), 
                                 sAFT_JM_U95 = c(sAFT_JM_u95["beta_long[1].97.5%"] + Y_obs_mean, sAFT_JM_u95["beta_long[2].97.5%"], sAFT_JM_u95["beta_long[3].97.5%"], sAFT_JM_u95["gamma[1].97.5%"], sAFT_JM_u95["alpha.97.5%"])) 
 
