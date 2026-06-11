@@ -14,11 +14,11 @@ setwd(here("jomonoph_biomj"))
 source("datagen.R")  # Source file for data generation and MCMC initialisation functions
 
 # Set seed for reproducibility
-global_seed <- 1 # Change to whichever seed one wants simulation for (4159125)
+global_seed <- 4159125 # Change to whichever seed one wants simulation for (4159125)
 set.seed(global_seed)
 
 # Choice to use pre-compiled CSV files or generate data for a specific seed
-simulate_own_data <- TRUE # FALSE = use the pre-complied CSV files, TRUE = simulate data for a specific seed (global_seed)
+simulate_own_data <- FALSE # FALSE = use the pre-complied CSV files, TRUE = simulate data for a specific seed (global_seed)
 
 #### Scenarios used within manuscript
 
@@ -40,12 +40,12 @@ simulate_own_data <- TRUE # FALSE = use the pre-complied CSV files, TRUE = simul
 
 ## Load data
 if (!simulate_own_data) {
-  # Use pre-generated CSV files. These correspond to data generation for scenario 1 under global_seed=1
+  # Use pre-generated CSV files. These correspond to data generation for scenario 4 under global_seed=1
   longitudinal_data <- read.csv("simulated_longitudinal_data.csv")
   survival_data <- read.csv("simulated_survival_data.csv")
 } else {
   # Simulate data given a specific seed (global_seed)
-  sim_data <- simulate_joint_dataset(seed = global_seed, beta_2 = 0.04, log_AF = -0.90, aft_mode = "loglogistic", lambda_c = -1) # Default settings use 'scenario 1' for the loglogistic setting with administrative censoring only 
+  sim_data <- simulate_joint_dataset(seed = global_seed, beta_2 = 0.04, log_AF = -0.90, aft_mode = "loglogistic", lambda_c = -1) # Default settings use 'scenario 4' for the loglogistic setting with administrative censoring only 
   longitudinal_data <- sim_data$longitudinal
   survival_data <- sim_data$survival
 }
