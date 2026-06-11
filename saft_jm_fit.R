@@ -7,10 +7,6 @@ library(survival) # for survival analysis
 library(here) # for file directories
 library(tidyverse) # for data manipulation and plotting
 
-### REMOVE THIS ONCE MOVED INTO https://github.com/UQ-ULTRA/JoMoNoPH_BiomJ 
-setwd(here("jomonoph_biomj"))
-### 
-
 source("datagen.R")  # Source file for data generation and MCMC initialisation functions
 
 # Set seed for reproducibility
@@ -84,23 +80,22 @@ stan_data <- list(
   m = 5, # degree of bernstein polynomial
   s_long = s_long, # sample standard deviation of longitudinal outcome
   s_surv = s_surv, # sample standard deviation of survival scale
-  alpha_sd = (log(2) / 1.96) * (s_long / s_surv), # standard deviation of the prior for the association parameter alpha, scaled by the ratio of the standard deviations of the longitudinal and survival outcomes
-  N_long = nrow(longitudinal_data), # number of longitudinal observations
-  Y_long = longitudinal_data$Y_obs_centred, # longitudinal outcome (centred)
-  X_long = X_long, # longitudinal covariate matrix
-  N_1_long = length(id_levels), # number of unique participants in the longitudinal data (used for indexing random effects)
-  J_1_long = J_1_long, # indexing variable for matching longitudinal observations to participants (used for indexing random effects)
-  Z_1_1_long = rep(1, nrow(longitudinal_data)),  # random intercept design matrix (currently only including random intercepts, but can be extended to include random slopes by adding additional columns and modifying the model code accordingly)
-  Z_1_2_long = longitudinal_data$time, # random slope design matrix (currently only including random slopes for time, but can be extended to include additional random effects by adding additional columns and modifying the model code accordingly)
-  n = nrow(survival_data), # number of survival observations
-  status = survival_data$status, # event indicator for survival data
-  time = survival_data$T_obs, # observed time for survival data
-  X_surv = X_surv, # survival covariate matrix
-  J_1_unique = J_1_unique, # indexing variable for matching survival observations to participants (used for indexing random effects)
-  X_long_surv = X_long_surv # longitudinal covariates mapped to the survival observation times (used for including the current value of the longitudinal outcome in the survival submodel
+  alpha_sd = (log(2) / 1.96) * (s_long / s_surv),
+  N_long = nrow(longitudinal_data),
+  Y_long = longitudinal_data$Y_obs_centred,
+  X_long = X_long,
+  N_1_long = length(id_levels),
+  J_1_long = J_1_long,
+  Z_1_1_long = rep(1, nrow(longitudinal_data)),
+  Z_1_2_long = longitudinal_data$time,
+  n = nrow(survival_data),
+  status = survival_data$status,
+  time = survival_data$T_obs,
+  X_surv = X_surv,
+  J_1_unique = J_1_unique,
+  X_long_surv = X_long_surv
 )
 
-# Initialisation values for MCMC fitting
 init_values <- make_init(chains=4, lmm_fit, surv_fit)
 
 # Fit Stan model
@@ -116,41 +111,17 @@ sAFT_fit <- saftjm_model$sample(
 
 
 # Comparison of results
-lmm_est <- fixed.effects(lmm_fit) 
-lmm_se <- sqrt(diag(vcov(lmm_fit))) 
-
-aft_est <- surv_fit$coefficients 
-aft_se <- summary(surv_fit)$table[, "Std. Error"] 
-sAFT_vars <- c("beta_long[1]", "beta_long[2]", "beta_long[3]", "beta_surv[1]", "alpha_tilde") 
-sAFT_draws <- posterior::as_draws_df(sAFT_fit$draws(variables = sAFT_vars)) 
-sAFT_est <- sapply(sAFT_vars, function(x) mean(sAFT_draws[[x]])) 
-sAFT_se <- sapply(sAFT_vars, function(x) sd(sAFT_draws[[x]])) 
-sAFT_l95 <- sapply(sAFT_vars, function(x) quantile(sAFT_draws[[x]], 0.025)) 
-sAFT_u95 <- sapply(sAFT_vars, function(x) quantile(sAFT_draws[[x]], 0.975)) 
-
-result_comparison <- data.frame(Parameter = c("beta_long_intercept", "beta_long_time", "beta_long_time_arm", "beta_surv_arm", "alpha_tilde"), 
-                    LMM = c(lmm_est["(Intercept)"], lmm_est["time"], lmm_est["time:arm"], NA, NA), 
-                    LMM_SE = c(lmm_se["(Intercept)"], lmm_se["time"], lmm_se["time:arm"], NA, NA), 
-                    LMM_L95 = c(lmm_est["(Intercept)"] - 1.96*lmm_se["(Intercept)"], lmm_est["time"] - 1.96*lmm_se["time"], lmm_est["time:arm"] - 1.96*lmm_se["time:arm"], NA, NA), 
-                    LMM_U95 = c(lmm_est["(Intercept)"] + 1.96*lmm_se["(Intercept)"], lmm_est["time"] + 1.96*lmm_se["time"], lmm_est["time:arm"] + 1.96*lmm_se["time:arm"], NA, NA), 
-                    AFT = c(NA, NA, NA, aft_est["arm"], NA), 
-                    AFT_SE = c(NA, NA, NA, aft_se["arm"], NA), 
-                    AFT_L95 = c(NA, NA, NA, aft_est["arm"] - 1.96*aft_se["arm"], NA), 
-                    AFT_U95 = c(NA, NA, NA, aft_est["arm"] + 1.96*aft_se["arm"], NA), 
-                    sAFT = c(sAFT_est["beta_long[1]"], sAFT_est["beta_long[2]"], sAFT_est["beta_long[3]"], sAFT_est["beta_surv[1]"], sAFT_est["alpha_tilde"]), 
-                    sAFT_SE = c(sAFT_se["beta_long[1]"], sAFT_se["beta_long[2]"], sAFT_se["beta_long[3]"], sAFT_se["beta_surv[1]"], sAFT_se["alpha_tilde"]), 
-                    sAFT_L95 = c(sAFT_l95["beta_long[1]"], sAFT_l95["beta_long[2]"], sAFT_l95["beta_long[3]"], sAFT_l95["beta_surv[1]"], sAFT_l95["alpha_tilde"]), 
-                    sAFT_U95 = c(sAFT_u95["beta_long[1]"], sAFT_u95["beta_long[2]"], sAFT_u95["beta_long[3]"], sAFT_u95["beta_surv[1]"], sAFT_u95["alpha_tilde"])) 
+result_comparison <- data.frame(
+  Parameter = c("beta_long_intercept", "beta_long_time", "beta_long_time_arm", "beta_surv_arm", "alpha_tilde"),
+  LMM = c(fixef(lmm_fit)["(Intercept)"], fixef(lmm_fit)["time"], fixef(lmm_fit)["time:arm"], NA, NA),
+  AFT = c(NA, NA, NA, surv_fit$coefficients["arm"], NA),
+  sAFT = c(sAFT_fit$summary(c("beta_long[1], beta_long[2]", "beta_long[3]"))$mean, sAFT_fit$summary("beta_surv[1]")$mean, sAFT_fit$summary("alpha_tilde")$mean)
+)
 result_comparison
 
 
-
-# result_comparison <- data.frame(
-#   Parameter = c("beta_long_intercept", "beta_long_time", "beta_long_time_arm", "beta_surv_arm", "alpha_tilde"),
-#   LMM = c(fixef(lmm_fit)["(Intercept)"], fixef(lmm_fit)["time"], fixef(lmm_fit)["time:arm"], NA, NA),
-#   AFT = c(NA, NA, NA, surv_fit$coefficients["arm"], NA),
-#   sAFT = c(sAFT_fit$summary(c("beta_long[1], beta_long[2]", "beta_long[3]"))$mean, sAFT_fit$summary("beta_surv[1]")$mean, sAFT_fit$summary("alpha_tilde")$mean)
-# )
-# result_comparison
+# Plot comparison of estimate and 95% credible/confidence intervals for key parameters of interest
+plot_data <- data.frame()
+plot_comparison <- 2
 
 
