@@ -118,16 +118,16 @@ sAFT_JM_fit <- saftjm_model$sample(
 ### Formatting of results
 
 # Extract linear mixed model estimate and standard error
-lmm_est <- fixed.effects(lmm_fit) 
+lmm_est <- fixed.effects(lmm_fit) + Y_obs_mean
 lmm_se <- sqrt(diag(vcov(lmm_fit))) 
 
 # Extract sAFT-JM model estimate and standard error 
 sAFT_JM_vars <- c("beta_long[1]", "beta_long[2]", "beta_long[3]", "gamma[1]", "alpha") # Parameters of interest
 sAFT_JM_draws <- posterior::as_draws_df(sAFT_JM_fit$draws(variables = sAFT_JM_vars)) # Extract posterior draws 
-sAFT_JM_est <- sapply(sAFT_JM_vars, function(x) mean(sAFT_JM_vars[[x]])) 
+sAFT_JM_est <- sapply(sAFT_JM_vars, function(x) mean(sAFT_JM_vars[[x]])) + Y_obs_mean 
 sAFT_JM_se <- sapply(sAFT_JM_vars, function(x) sd(sAFT_JM_vars[[x]])) 
-sAFT_JM_l95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.025)) 
-sAFT_JM_u95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.975)) 
+sAFT_JM_l95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.025)) + Y_obs_mean 
+sAFT_JM_u95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.975)) + Y_obs_mean 
 
 # Construct dataframe of results
 result_comparison <- data.frame(Parameter = c("beta_long_intercept", "beta_long_time", "beta_long_time_arm", "gamma", "alpha"), 
