@@ -45,7 +45,7 @@ if (!simulate_own_data) {
   survival_data <- read.csv("simulated_survival_data.csv")
 } else {
   # Simulate data given a specific seed (global_seed)
-  sim_data <- simulate_joint_dataset(seed = global_seed, beta_2 = 0.04, log_AF = 0.90, aft_mode = "loglogistic", lambda_c = 0) # Default settings use 'scenario 1' for the loglogistic setting with administrative censoring only 
+  sim_data <- simulate_joint_dataset(seed = global_seed, beta_2 = 0.04, log_AF = -0.90, aft_mode = "loglogistic", lambda_c = -1) # Default settings use 'scenario 1' for the loglogistic setting with administrative censoring only 
   longitudinal_data <- sim_data$longitudinal
   survival_data <- sim_data$survival
 }
