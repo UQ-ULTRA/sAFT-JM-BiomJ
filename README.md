@@ -19,7 +19,7 @@ The file containing functions relevant for data generation. The key function, `s
 This real-world-inspired data generation scheme assigns participants to an equal size of each treatment, with options for users to choose between:
 
 * log-logistic or Weibull true baseline hazards,
-* censoring proportions: administrative, none, or 50% censoring,
+* censoring proportions: administrative, or 50% censoring,
 * treatment effects.
 
 ---
