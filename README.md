@@ -53,11 +53,11 @@ Simulated datasets of the longitudinal and survival data.
 These can be reproduced by setting `simulate_own_data` to `TRUE` within `saft_jm_fit.R`, using:
 
 ```r
-global_seed = 1
+global_seed = 854098
 beta_2 = 0.04
 log_AF = -0.90
 aft_mode = "loglogistic"
-lambda_c = 0
+lambda_c = -1
 ```
 
 within the parameter settings of the `simulate_joint_dataset` function.
@@ -102,7 +102,16 @@ cmdstanr::install_cmdstan()
 
 The model was fit on the simulated longitudinal and survival datasets (as provided by the CSVs) within `saft_jm_fit.R`. The following results were given:
 
-RESULTS TABLE HERE 
+| Parameter             |                        LMM |                    sAFT-JM |
+| --------------------- | -------------------------: | -------------------------: |
+| `beta_long_intercept` | 73.1935 (72.2525, 74.1345) | 73.1868 (72.2532, 74.0866) |
+| `beta_long_time`      | -0.0271 (-0.0500, -0.0041) | -0.0332 (-0.0564, -0.0102) |
+| `beta_long_time_arm`  |    0.0431 (0.0058, 0.0804) |    0.0377 (0.0004, 0.0749) |
+| `gamma`               |                          — | -0.8813 (-1.0507, -0.7200) |
+| `alpha`               |                          — |    0.0143 (0.0089, 0.0199) |
+
+Machine specification: MacBook Pro 14 M2 Pro
+Stan total execution time: 341.5 seconds
 
 Note that the 95% interval for the sAFT-JM is the credible interval, and the 95% interval for the LMM results is the confidence interval. `cmdstanr` MCMC sampling has slight machine-dependent variability, thereby there may be minor variability in results.
 
