@@ -104,7 +104,7 @@ stan_data <- list(
 init_values <- make_init(chains=4, lmm_fit, surv_fit)
 
 # Fit Stan model
-sAFT_fit <- saftjm_model$sample(
+sAFT_JM_fit <- saftjm_model$sample(
   data = stan_data,
   chains = 4,
   parallel_chains = 4,
@@ -117,48 +117,41 @@ sAFT_fit <- saftjm_model$sample(
 
 ### Formatting of results
 
-
+# Extract linear mixed model estimate and standard error
 lmm_est <- fixed.effects(lmm_fit) 
 lmm_se <- sqrt(diag(vcov(lmm_fit))) 
 
-sAFT_vars <- c("beta_long[1]", "beta_long[2]", "beta_long[3]", "gamma[1]", "alpha") # Parameters of interest
-sAFT_draws <- posterior::as_draws_df(sAFT_fit$draws(variables = sAFT_vars)) # Extract posterior draws 
-sAFT_est <- sapply(sAFT_vars, function(x) mean(sAFT_draws[[x]])) 
-sAFT_se <- sapply(sAFT_vars, function(x) sd(sAFT_draws[[x]])) 
-sAFT_l95 <- sapply(sAFT_vars, function(x) quantile(sAFT_draws[[x]], 0.025)) 
-sAFT_u95 <- sapply(sAFT_vars, function(x) quantile(sAFT_draws[[x]], 0.975)) 
+# Extract sAFT-JM model estimate and standard error 
+sAFT_JM_vars <- c("beta_long[1]", "beta_long[2]", "beta_long[3]", "gamma[1]", "alpha") # Parameters of interest
+sAFT_JM_draws <- posterior::as_draws_df(sAFT_JM_fit$draws(variables = sAFT_JM_vars)) # Extract posterior draws 
+sAFT_JM_est <- sapply(sAFT_JM_vars, function(x) mean(sAFT_JM_vars[[x]])) 
+sAFT_JM_se <- sapply(sAFT_JM_vars, function(x) sd(sAFT_JM_vars[[x]])) 
+sAFT_JM_l95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.025)) 
+sAFT_JM_u95 <- sapply(sAFT_JM_vars, function(x) quantile(sAFT_JM_vars[[x]], 0.975)) 
 
+# Construct dataframe of results
 result_comparison <- data.frame(Parameter = c("beta_long_intercept", "beta_long_time", "beta_long_time_arm", "gamma", "alpha"), 
                                 LMM = c(lmm_est["(Intercept)"], lmm_est["time"], lmm_est["time:arm"], NA, NA), 
                                 LMM_SE = c(lmm_se["(Intercept)"], lmm_se["time"], lmm_se["time:arm"], NA, NA), 
                                 LMM_L95 = c(lmm_est["(Intercept)"] - 1.96*lmm_se["(Intercept)"], lmm_est["time"] - 1.96*lmm_se["time"], lmm_est["time:arm"] - 1.96*lmm_se["time:arm"], NA, NA), 
                                 LMM_U95 = c(lmm_est["(Intercept)"] + 1.96*lmm_se["(Intercept)"], lmm_est["time"] + 1.96*lmm_se["time"], lmm_est["time:arm"] + 1.96*lmm_se["time:arm"], NA, NA), 
-                                sAFT = c(sAFT_est["beta_long[1]"], sAFT_est["beta_long[2]"], sAFT_est["beta_long[3]"], sAFT_est["gamma[1]"], sAFT_est["alpha"]), 
-                                sAFT_SE = c(sAFT_se["beta_long[1]"], sAFT_se["beta_long[2]"], sAFT_se["beta_long[3]"], sAFT_se["gamma[1]"], sAFT_se["alpha"]), 
-                                sAFT_L95 = c(sAFT_l95["beta_long[1].2.5%"], sAFT_l95["beta_long[2].2.5%"], sAFT_l95["beta_long[3].2.5%"], sAFT_l95["gamma[1].2.5%"], sAFT_l95["alpha.2.5%"]), 
-                                sAFT_U95 = c(sAFT_u95["beta_long[1].97.5%"], sAFT_u95["beta_long[2].97.5%"], sAFT_u95["beta_long[3].97.5%"], sAFT_u95["gamma[1].97.5%"], sAFT_u95["alpha.97.5%"])) 
-result_comparison
+                                sAFT_JM = c(sAFT_JM_est["beta_long[1]"], sAFT_JM_est["beta_long[2]"], sAFT_JM_est["beta_long[3]"], sAFT_JM_est["gamma[1]"], sAFT_JM_est["alpha"]), 
+                                sAFT_JM_SE = c(sAFT_JM_se["beta_long[1]"], sAFT_JM_se["beta_long[2]"], sAFT_JM_se["beta_long[3]"], sAFT_se["gamma[1]"], sAFT_JM_se["alpha"]), 
+                                sAFT_JM_L95 = c(sAFT_JM_l95["beta_long[1].2.5%"], sAFT_JM_l95["beta_long[2].2.5%"], sAFT_JM_l95["beta_long[3].2.5%"], sAFT_JM_l95["gamma[1].2.5%"], sAFT_JM_l95["alpha.2.5%"]), 
+                                sAFT_JM_U95 = c(sAFT_JM_u95["beta_long[1].97.5%"], sAFT_JM_u95["beta_long[2].97.5%"], sAFT_JM_u95["beta_long[3].97.5%"], sAFT_JM_u95["gamma[1].97.5%"], sAFT_JM_u95["alpha.97.5%"])) 
 
 
-# Make result comparison prettier: estimate (SE; 95% CI)
+# Format result comparison function (SE; 95% CI)
 format_result <- function(est, se, l95, u95) {
-  ifelse(is.na(est),"", paste0(round(est, 4)," (",round(se, 4),"; ",round(l95, 4),", ",round(u95, 4),")"))
+  ifelse(is.na(est),"", paste0(round(est, 4)," (; ",round(l95, 4),", ",round(u95, 4),")"))
 }
 
+# Construct clean result comparison
 result_comparison_clean <- data.frame(
   Parameter = result_comparison$Parameter,
   LMM = format_result(result_comparison$LMM, result_comparison$LMM_SE, result_comparison$LMM_L95, result_comparison$LMM_U95),
-  sAFT = format_result(result_comparison$sAFT, result_comparison$sAFT_SE, result_comparison$sAFT_L95, result_comparison$sAFT_U95)
+  sAFT_JM = format_result(result_comparison$sAFT_JM, result_comparison$sAFT_JM_SE, result_comparison$sAFT_JM_L95, result_comparison$sAFT_JM_U95)
 )
 result_comparison_clean
-
-
-# result_comparison <- data.frame(
-#   Parameter = c("beta_long_intercept", "beta_long_time", "beta_long_time_arm", "beta_surv_arm", "alpha_tilde"),
-#   LMM = c(fixef(lmm_fit)["(Intercept)"], fixef(lmm_fit)["time"], fixef(lmm_fit)["time:arm"], NA, NA),
-#   AFT = c(NA, NA, NA, surv_fit$coefficients["arm"], NA),
-#   sAFT = c(sAFT_fit$summary(c("beta_long[1], beta_long[2]", "beta_long[3]"))$mean, sAFT_fit$summary("beta_surv[1]")$mean, sAFT_fit$summary("alpha_tilde")$mean)
-# )
-# result_comparison
 
 
