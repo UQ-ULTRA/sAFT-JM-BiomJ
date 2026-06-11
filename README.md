@@ -95,3 +95,24 @@ For `cmdstanr`, the additional setup is required:
 ```r
 cmdstanr::install_cmdstan()
 ```
+
+---
+
+## Default simulation results 
+
+The model was fit on the simulated longitudinal and survival datasets (as provided by the CSVs) within `saft_jm_fit.R`. The following results were given:
+
+RESULTS TABLE HERE 
+
+Note that the 95% interval for the sAFT-JM is the credible interval, and the 95% interval for the LMM results is the confidence interval. `cmdstanr` MCMC sampling has slight machine-dependent variability, thereby there may be minor variability in results.
+
+---
+
+## Other points to note
+
+- There are common `cmdstanr` warnings at the beginning of sampling for each chain, warning about the Cholesky decomposition, stating `Exception: lkj_corr_cholesky_lpdf: Random variable[2] is 0, but must be positive!`. This is not of concern and is expected, this is normal for early MCMC warm-up samples and does not impact parameter estimate.
+
+
+
+
+
